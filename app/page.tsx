@@ -158,12 +158,6 @@ export default function TeleprompterBasicoOculto() {
 
           <div className="p-4 bg-zinc-950/60 border-t border-zinc-800/40 flex flex-col items-center gap-4">
             <div className="flex flex-wrap justify-center gap-4">
-              <button
-                onClick={accessCamera}
-                className="py-3 px-6 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white font-bold text-xs rounded-2xl transition-all flex items-center gap-2"
-              >
-                🎥 Activar cámara
-              </button>
               {!isRecording ? (
                 <button
                   onClick={startRecording}
@@ -175,9 +169,10 @@ export default function TeleprompterBasicoOculto() {
               ) : (
                 <button
                   onClick={stopRecording}
-                  className="py-3 px-6 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white font-bold text-xs rounded-2xl transition-all flex items-center gap-2"
+                  className="py-3 px-6 bg-red-600 hover:bg-red-700 border border-red-500 text-white font-bold text-xs rounded-2xl transition-all flex items-center gap-2 animate-pulse"
                 >
-                  ⏹️ Detener y Descargar
+                  <span className="h-3 w-3 rounded-full bg-white animate-pulse" />
+                  Grabando
                 </button>
               )}
             </div>
