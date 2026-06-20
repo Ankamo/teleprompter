@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 
 export default function TeleprompterBasicoOculto() {
   const [isRecording, setIsRecording] = useState(false);
+  const [showSceneScript, setShowSceneScript] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [scenes, setScenes] = useState([
@@ -104,12 +105,14 @@ export default function TeleprompterBasicoOculto() {
 
     recorder.start();
     setIsRecording(true);
+    setShowSceneScript(true);
   };
 
   const stopRecording = () => {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
+      setShowSceneScript(false);
     }
   };
 
@@ -210,11 +213,19 @@ export default function TeleprompterBasicoOculto() {
                 </div>
               )}
             </div>
-            <p className={`text-lg md:text-xl font-medium leading-relaxed transition-colors duration-300 ${
-              isRecording ? "text-zinc-100" : "text-zinc-400"
-            }`}>
-              {text}
-            </p>
+            {showSceneScript && (
+              <div className="mb-4 rounded-3xl border border-red-500/40 bg-red-950/20 p-4 text-sm text-zinc-100">
+                <p className="text-xs uppercase tracking-[0.28em] text-red-300 mb-3">Guion de la escena</p>
+                <p className="whitespace-pre-line leading-relaxed">{text}</p>
+              </div>
+            )}
+            {!showSceneScript && (
+              <p className={`text-lg md:text-xl font-medium leading-relaxed transition-colors duration-300 ${
+                isRecording ? "text-zinc-100" : "text-zinc-400"
+              }`}>
+                {text}
+              </p>
+            )}
             </div>
           </div>
 
