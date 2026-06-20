@@ -10,11 +10,14 @@ export default function TeleprompterBasicoOculto() {
     {
       id: 1,
       title: "Escena 1",
-      text: "Este es el texto del teleprompter para la primera escena. Puedes agregar nuevas escenas con el botón + para practicar diferentes bloques.",
+      text: "Este es el texto del teleprompter para la primera escena. Puedes generar más escenas escribiendo un guion con bloques separados.",
     },
   ]);
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0);
   const [text, setText] = useState(scenes[0].text);
+  const [scriptText, setScriptText] = useState(
+    `Escena 1\nEste es el texto del teleprompter para la primera escena.\n\nEscena 2\nAquí va el texto para la segunda escena, separada por una línea en blanco.`
+  );
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -38,17 +41,33 @@ export default function TeleprompterBasicoOculto() {
     }
   };
 
-  const addScene = () => {
-    setScenes((prevScenes) => {
-      const nextIndex = prevScenes.length;
-      const newScene = {
-        id: nextIndex + 1,
-        title: `Escena ${nextIndex + 1}`,
-        text: `Texto inicial para la escena ${nextIndex + 1}. Cámbialo para ajustar tu teleprompter.`,
+  const generateScenesFromScript = () => {
+    const rawScenes = scriptText
+      .split(/\n{2,}/)
+      .map((block) => block.trim())
+      .filter(Boolean);
+
+    if (rawScenes.length === 0) {
+      return;
+    }
+
+    const newScenes = rawScenes.map((block, index) => {
+      const lines = block.split("\n").map((line) => line.trim()).filter(Boolean);
+      const firstLine = lines[0] ?? `Escena ${index + 1}`;
+      const title = firstLine.toLowerCase().startsWith("escena")
+        ? firstLine
+        : `Escena ${index + 1}`;
+      const body = lines.slice(1).join(" ").trim();
+
+      return {
+        id: index + 1,
+        title,
+        text: body || firstLine,
       };
-      setCurrentSceneIndex(nextIndex);
-      return [...prevScenes, newScene];
     });
+
+    setScenes(newScenes);
+    setCurrentSceneIndex(0);
   };
 
   useEffect(() => {
@@ -134,25 +153,68 @@ export default function TeleprompterBasicoOculto() {
             </div>
 
             <div className="w-full rounded-3xl bg-zinc-950/80 border border-zinc-800 p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 mb-4 border-b border-zinc-800/50">
+              <div className="flex flex-col gap-4 pb-4 mb-4 border-b border-zinc-800/50">
+              <div className="flex flex-col gap-2">
+                <p className="text-xs uppercase tracking-[0.28em] text-zinc-500">Escribe tu guion</p>
+                <p className="text-sm text-zinc-400">
+                  Separa cada escena con una línea en blanco. El primer texto de cada bloque puede ser el título o el contenido de la escena.
+                </p>
+              </div>
+              <textarea
+                value={scriptText}
+                onChange={(event) => setScriptText(event.target.value)}
+                rows={7}
+                className="w-full rounded-3xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-zinc-100 outline-none transition focus:border-zinc-600"
+              />
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={generateScenesFromScript}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-2 text-xs font-semibold text-white transition hover:border-zinc-600 hover:bg-zinc-800"
+                >
+                  📜 Generar escenas
+                </button>
+                <span className="rounded-full bg-zinc-800 px-3 py-1 text-xs text-zinc-400">
+                  {scenes.length} escena{scenes.length === 1 ? "" : "s"}
+                </span>
+              </div>
+            </div>
+            <div className="mb-4 flex flex-col gap-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="text-xs uppercase tracking-[0.28em] text-zinc-500">Escena actual</p>
                   <p className="text-base font-semibold text-zinc-100">{scenes[currentSceneIndex]?.title ?? "Escena 1"}</p>
                 </div>
-                <button
-                  type="button"
-                  onClick={addScene}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-2 text-xs font-semibold text-white transition hover:border-zinc-600 hover:bg-zinc-800"
-                >
-                  <span className="text-lg leading-none">+</span>
-                  Nueva escena
-                </button>
+                <span className="rounded-full bg-zinc-800 px-3 py-1 text-xs text-zinc-400">
+                  {currentSceneIndex + 1} / {scenes.length}
+                </span>
               </div>
-              <p className={`text-lg md:text-xl font-medium leading-relaxed transition-colors duration-300 ${
-                isRecording ? "text-zinc-100" : "text-zinc-400"
-              }`}>
-                {text}
-              </p>
+              {scenes.length > 1 && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentSceneIndex((prev) => Math.max(prev - 1, 0))}
+                    className="rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-2 text-[11px] font-semibold text-white transition hover:border-zinc-600 hover:bg-zinc-800 disabled:opacity-50"
+                    disabled={currentSceneIndex === 0}
+                  >
+                    ← Anterior
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentSceneIndex((prev) => Math.min(prev + 1, scenes.length - 1))}
+                    className="rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-2 text-[11px] font-semibold text-white transition hover:border-zinc-600 hover:bg-zinc-800 disabled:opacity-50"
+                    disabled={currentSceneIndex === scenes.length - 1}
+                  >
+                    Siguiente →
+                  </button>
+                </div>
+              )}
+            </div>
+            <p className={`text-lg md:text-xl font-medium leading-relaxed transition-colors duration-300 ${
+              isRecording ? "text-zinc-100" : "text-zinc-400"
+            }`}>
+              {text}
+            </p>
             </div>
           </div>
 
