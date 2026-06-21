@@ -122,10 +122,6 @@ export default function TeleprompterBasicoOculto() {
         {/* Contenedor Principal tipo Tarjeta "Cámara" */}
         <div className="w-full bg-zinc-900 border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden">
           <div className="px-6 py-4 border-b border-zinc-800/60 flex justify-between items-center bg-zinc-900/50">
-            <div>
-              <p className="text-xs font-mono text-zinc-400 uppercase tracking-wider">Teleprompter Cámara</p>
-              <p className="text-sm text-zinc-500">Cuadrado tipo visor</p>
-            </div>
             <div className="flex items-center gap-2">
               <span className={`w-2.5 h-2.5 rounded-full ${isRecording ? "bg-red-500 animate-pulse" : "bg-zinc-700"}`} />
               <span className="text-xs uppercase tracking-widest text-zinc-500">{isRecording ? "Grabando" : "Listo"}</span>
