@@ -1,7 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import ServiceWorkerRegister from "./components/ServiceWorkerRegister";
-
 // Configuración de visualización para dispositivos móviles
 export const viewport: Viewport = {
   themeColor: "#000000",
@@ -38,7 +36,6 @@ export default function RootLayout({
       </head>
       <body>
         {children}
-        <ServiceWorkerRegister />
       </body>
     </html>
   );
