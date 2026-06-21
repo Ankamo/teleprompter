@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 
-export default function TeleprompterSencilloConCamara() {
+export default function TeleprompterProduccion() {
   const [isRecording, setIsRecording] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
@@ -12,19 +12,18 @@ export default function TeleprompterSencilloConCamara() {
   ]);
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0);
   const [scriptText, setScriptText] = useState(
-    `Escena 1\nEste es el texto de tu teleprompter. Puedes cambiar de escena o pegar tu propio guion abajo.\n\nEscena 2\nEste es el texto de la segunda escena. ¡Pega aquí lo que quieras!`
+    `ESCENA 1\nEste es el texto de tu teleprompter. Puedes cambiar de escena o pegar tu propio guion abajo.\n\nESCENA 2\nEste es el texto de la segunda escena. ¡Pega aquí lo que quieras!`
   );
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
-  // Activar cámara y mostrarla en pantalla
   const accessCamera = async () => {
     try {
       setCameraError(null);
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 640, height: 480, facingMode: "user" },
+        video: { width: 1280, height: 720, facingMode: "user" },
         audio: true,
       });
       if (videoRef.current) {
@@ -44,7 +43,7 @@ export default function TeleprompterSencilloConCamara() {
     const newScenes = blocks.map((block, i) => {
       const lines = block.split("\n").map(l => l.trim()).filter(Boolean);
       const firstLine = lines[0] ?? `ESCENA ${i + 1}`;
-      const title = firstLine.toLowerCase().startsWith("escena") ? firstLine.toUpperCase() : `ESCENA ${i + 1}`;
+      const title = firstLine.toUpperCase().startsWith("ESCENA") ? firstLine.toUpperCase() : `ESCENA ${i + 1}`;
       const body = lines.slice(1).join(" ").trim();
       return { id: i + 1, title, text: body || firstLine };
     });
@@ -73,11 +72,12 @@ export default function TeleprompterSencilloConCamara() {
     };
 
     recorder.onstop = () => {
-      const blob = new Blob(chunksRef.current, { type: "video/mp4" });
+      const blob = new Blob(chunksRef.current, { type: "video/webm" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `teleprompter-${Date.now()}.mp4`;
+      // Se guarda como .webm para evitar errores de codificación en Windows Player
+      a.download = `teleprompter-${Date.now()}.webm`;
       a.click();
     };
 
@@ -93,92 +93,119 @@ export default function TeleprompterSencilloConCamara() {
   };
 
   return (
-    <main className="min-h-screen w-full bg-zinc-950 text-zinc-100 flex flex-col items-center justify-center p-4 sm:p-6 font-sans antialiased">
-      <div className="w-full max-w-4xl flex flex-col gap-6">
+    <main className="min-h-screen w-full bg-zinc-950 text-zinc-100 flex flex-col items-center p-4 sm:p-6 font-sans antialiased">
+      <div className="w-full max-w-3xl flex flex-col gap-6">
         
-        {/* SECCIÓN SUPERIOR: CÁMARA Y TEXTO LADO A LADO */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
-          
-          {/* 1. El Visor de la Cámara (Ocupa 1 columna en pantallas grandes) */}
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 flex flex-col items-center justify-center relative min-h-[200px]">
-            <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider mb-2 self-start">Vista Previa</span>
-            <div className="w-full aspect-video md:aspect-square bg-black rounded-xl overflow-hidden relative border border-zinc-800">
-              <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-              {!cameraReady && (
-                <div className="absolute inset-0 flex items-center justify-center bg-zinc-950 text-xs text-zinc-400 text-center p-2">
-                  {cameraError || "Cargando cámara..."}
+        {/* 1. VISOR DE LA CÁMARA (HORIZONTAL 16:9) */}
+        <div className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-2xl relative">
+          <div className="px-5 py-3 border-b border-zinc-800/60 flex justify-between items-center bg-zinc-900/50">
+            <span className="text-xs font-mono text-zinc-400 uppercase tracking-wider">Vista de Grabación</span>
+            <span className={`h-2.5 w-2.5 rounded-full ${isRecording ? "bg-red-500 animate-pulse" : "bg-emerald-500"}`} />
+          </div>
+
+          <div className="w-full aspect-video bg-black relative flex items-center justify-center">
+            <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+            
+            {/* Texto superpuesto únicamente cuando se está grabando */}
+            {isRecording && (
+              <div className="absolute inset-0 bg-black/40 flex items-center justify-center p-8 backdrop-blur-[1px]">
+                <div className="max-w-xl text-center">
+                  <span className="text-[10px] font-mono bg-red-600 text-white px-2 py-0.5 rounded-md uppercase tracking-widest block w-max mx-auto mb-3 animate-pulse">
+                    {scenes[currentSceneIndex]?.title || "PROMPTER"}
+                  </span>
+                  <p className="text-white text-lg sm:text-2xl font-bold leading-relaxed drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)] select-none">
+                    {scenes[currentSceneIndex]?.text}
+                  </p>
                 </div>
-              )}
-            </div>
-          </div>
-
-          {/* 2. El Teleprompter (Ocupa 2 columnas) */}
-          <div className="md:col-span-2 bg-zinc-900 border border-zinc-800 rounded-2xl flex flex-col justify-between overflow-hidden shadow-xl">
-            <div className="px-5 py-3 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/50">
-              <span className="text-xs font-semibold text-zinc-300">{scenes[currentSceneIndex]?.title || "ESCENA"}</span>
-              <span className={`h-2 w-2 rounded-full ${isRecording ? "bg-red-500 animate-pulse" : "bg-emerald-500"}`} />
-            </div>
-
-            {/* Texto para leer */}
-            <div className="p-6 sm:p-8 flex items-center justify-center min-h-[160px] bg-zinc-950/20">
-              <p className={`text-center text-lg sm:text-xl font-medium leading-relaxed max-w-md ${isRecording ? "text-white font-semibold" : "text-zinc-400"}`}>
-                {scenes[currentSceneIndex]?.text}
-              </p>
-            </div>
-
-            {/* Controles de Escena e Grabación */}
-            <div className="p-4 bg-zinc-950/40 border-t border-zinc-800 flex flex-col sm:flex-row justify-between items-center gap-3">
-              <div className="flex gap-1.5">
-                <button
-                  disabled={currentSceneIndex === 0}
-                  onClick={() => setCurrentSceneIndex(p => Math.max(p - 1, 0))}
-                  className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-xs rounded-lg disabled:opacity-30 border border-zinc-700"
-                >
-                  ←
-                </button>
-                <span className="text-xs font-mono px-2 py-1 bg-zinc-900 rounded-md border border-zinc-800 text-zinc-400 flex items-center">
-                  {currentSceneIndex + 1} / {scenes.length}
-                </span>
-                <button
-                  disabled={currentSceneIndex === scenes.length - 1}
-                  onClick={() => setCurrentSceneIndex(p => Math.min(p + 1, scenes.length - 1))}
-                  className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-xs rounded-lg disabled:opacity-30 border border-zinc-700"
-                >
-                  →
-                </button>
               </div>
+            )}
 
-              {!isRecording ? (
-                <button onClick={startRecording} disabled={!cameraReady} className="py-2 px-5 bg-zinc-100 hover:bg-zinc-200 text-zinc-950 font-bold text-xs rounded-xl transition-all disabled:opacity-40">
-                  🔴 Grabar
-                </button>
-              ) : (
-                <button onClick={stopRecording} className="py-2 px-5 bg-red-600 hover:bg-red-500 text-white font-bold text-xs rounded-xl transition-all animate-pulse">
-                  ⏹️ Detener
-                </button>
-              )}
-            </div>
+            {!cameraReady && (
+              <div className="absolute inset-0 flex items-center justify-center bg-zinc-950 text-xs text-zinc-400">
+                {cameraError || "Accediendo a la cámara..."}
+              </div>
+            )}
           </div>
 
+          {/* Botón de Grabación integrado debajo del Visor */}
+          <div className="p-3 bg-zinc-950/80 border-t border-zinc-800 flex justify-center">
+            {!isRecording ? (
+              <button 
+                onClick={startRecording} 
+                disabled={!cameraReady} 
+                className="py-2.5 px-6 bg-zinc-100 hover:bg-zinc-200 text-zinc-950 font-bold text-xs uppercase tracking-wider rounded-xl transition-all disabled:opacity-40"
+              >
+                🔴 Iniciar Grabación
+              </button>
+            ) : (
+              <button 
+                onClick={stopRecording} 
+                className="py-2.5 px-6 bg-red-600 hover:bg-red-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all animate-pulse"
+              >
+                ⏹️ Detener y Guardar
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* ÁREA DE COPIAR / PEGAR EL GUION */}
+        {/* 2. BARRA DE TEXTO PARA AGREGAR EL GUION */}
         <div className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-5 shadow-lg flex flex-col gap-3">
           <div>
-            <h3 className="text-xs font-mono uppercase tracking-wider text-zinc-400">Guion Completo</h3>
-            <p className="text-xs text-zinc-500 mt-0.5">Pega tu texto aquí libremente. Separa con doble ENTER para crear nuevas escenas.</p>
+            <h3 className="text-xs font-mono uppercase tracking-wider text-zinc-400">Editor de Guion</h3>
+            <p className="text-xs text-zinc-500 mt-0.5">Escribe o pega tu texto aquí. Usa doble espacio (Enter) para fragmentar las escenas.</p>
           </div>
 
           <textarea
             value={scriptText}
             onChange={(e) => setScriptText(e.target.value)}
-            rows={4}
+            rows={5}
+            placeholder="Pega tu guion aquí..."
             className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-zinc-200 outline-none focus:border-zinc-700 font-sans leading-relaxed"
           />
 
-          <button onClick={generateScenes} className="self-start px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold rounded-xl border border-zinc-700 transition">
+          <button 
+            onClick={generateScenes} 
+            className="self-start px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold rounded-xl border border-zinc-700 transition"
+          >
             ✨ Cargar Guion al Prompter
           </button>
+        </div>
+
+        {/* 3. VISUALIZADOR DE ESCENAS GENERADAS */}
+        <div className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl flex flex-col overflow-hidden shadow-xl">
+          <div className="px-5 py-3 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/50">
+            <span className="text-xs font-semibold text-zinc-300">
+              Vista del Guion: {scenes[currentSceneIndex]?.title || "ESCENA"}
+            </span>
+            <span className="text-xs font-mono text-zinc-500 bg-zinc-950 px-2.5 py-0.5 rounded border border-zinc-800">
+              {currentSceneIndex + 1} / {scenes.length}
+            </span>
+          </div>
+
+          <div className="p-6 min-h-[120px] flex items-center justify-center bg-zinc-950/20">
+            <p className="text-center text-base sm:text-lg text-zinc-400 leading-relaxed max-w-xl">
+              {scenes[currentSceneIndex]?.text}
+            </p>
+          </div>
+
+          {scenes.length > 1 && (
+            <div className="px-4 py-3 bg-zinc-950/40 border-t border-zinc-800 flex justify-end gap-2">
+              <button
+                disabled={currentSceneIndex === 0}
+                onClick={() => setCurrentSceneIndex(p => Math.max(p - 1, 0))}
+                className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-xs rounded-lg disabled:opacity-30 border border-zinc-700 transition"
+              >
+                ← Anterior
+              </button>
+              <button
+                disabled={currentSceneIndex === scenes.length - 1}
+                onClick={() => setCurrentSceneIndex(p => Math.min(p + 1, scenes.length - 1))}
+                className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-xs rounded-lg disabled:opacity-30 border border-zinc-700 transition"
+              >
+                Siguiente →
+              </button>
+            </div>
+          )}
         </div>
 
       </div>
