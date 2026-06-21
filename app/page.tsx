@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 
-export default function TeleprompterProduccion() {
+export default function TeleprompterProduccionLimpio() {
   const [isRecording, setIsRecording] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
@@ -76,7 +76,6 @@ export default function TeleprompterProduccion() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      // Se guarda como .webm para evitar errores de codificación en Windows Player
       a.download = `teleprompter-${Date.now()}.webm`;
       a.click();
     };
@@ -96,24 +95,30 @@ export default function TeleprompterProduccion() {
     <main className="min-h-screen w-full bg-zinc-950 text-zinc-100 flex flex-col items-center p-4 sm:p-6 font-sans antialiased">
       <div className="w-full max-w-3xl flex flex-col gap-6">
         
-        {/* 1. VISOR DE LA CÁMARA (HORIZONTAL 16:9) */}
+        {/* 1. VISOR DE LA CÁMARA (HORIZONTAL 16:9) CON TELEPROMPTER INTEGRADO */}
         <div className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-2xl relative">
           <div className="px-5 py-3 border-b border-zinc-800/60 flex justify-between items-center bg-zinc-900/50">
-            <span className="text-xs font-mono text-zinc-400 uppercase tracking-wider">Vista de Grabación</span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-mono text-zinc-400 uppercase tracking-wider">
+                {scenes[currentSceneIndex]?.title || "PROMPTER"}
+              </span>
+              {scenes.length > 1 && (
+                <span className="text-[11px] text-zinc-500 font-mono">
+                  ({currentSceneIndex + 1}/{scenes.length})
+                </span>
+              )}
+            </div>
             <span className={`h-2.5 w-2.5 rounded-full ${isRecording ? "bg-red-500 animate-pulse" : "bg-emerald-500"}`} />
           </div>
 
           <div className="w-full aspect-video bg-black relative flex items-center justify-center">
             <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
             
-            {/* Texto superpuesto únicamente cuando se está grabando */}
+            {/* El guion aparece flotando sobre el video únicamente al estar grabando */}
             {isRecording && (
-              <div className="absolute inset-0 bg-black/40 flex items-center justify-center p-8 backdrop-blur-[1px]">
-                <div className="max-w-xl text-center">
-                  <span className="text-[10px] font-mono bg-red-600 text-white px-2 py-0.5 rounded-md uppercase tracking-widest block w-max mx-auto mb-3 animate-pulse">
-                    {scenes[currentSceneIndex]?.title || "PROMPTER"}
-                  </span>
-                  <p className="text-white text-lg sm:text-2xl font-bold leading-relaxed drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)] select-none">
+              <div className="absolute inset-0 bg-black/50 flex items-center justify-center p-6 sm:p-10 backdrop-blur-[1px]">
+                <div className="max-w-xl text-center select-none">
+                  <p className="text-white text-lg sm:text-2xl font-bold leading-relaxed drop-shadow-[0_4px_16px_rgba(0,0,0,1)]">
                     {scenes[currentSceneIndex]?.text}
                   </p>
                 </div>
@@ -127,85 +132,81 @@ export default function TeleprompterProduccion() {
             )}
           </div>
 
-          {/* Botón de Grabación integrado debajo del Visor */}
-          <div className="p-3 bg-zinc-950/80 border-t border-zinc-800 flex justify-center">
+          {/* Controles de grabación y navegación de escenas */}
+          <div className="p-3 bg-zinc-950/80 border-t border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+            
+            {/* Navegación de bloques de escena si hay más de uno */}
+            {scenes.length > 1 ? (
+              <div className="flex gap-1">
+                <button
+                  type="button"
+                  disabled={currentSceneIndex === 0}
+                  onClick={() => setCurrentSceneIndex(p => Math.max(p - 1, 0))}
+                  className="px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-xs text-zinc-300 rounded-lg disabled:opacity-30 border border-zinc-800 transition"
+                >
+                  ← Anterior
+                </button>
+                <button
+                  type="button"
+                  disabled={currentSceneIndex === scenes.length - 1}
+                  onClick={() => setCurrentSceneIndex(p => Math.min(p + 1, scenes.length - 1))}
+                  className="px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-xs text-zinc-300 rounded-lg disabled:opacity-30 border border-zinc-800 transition"
+                >
+                  Siguiente →
+                </button>
+              </div>
+            ) : (
+              <div className="hidden sm:block w-20" />
+            )}
+
+            {/* Botón Principal */}
             {!isRecording ? (
               <button 
                 onClick={startRecording} 
                 disabled={!cameraReady} 
-                className="py-2.5 px-6 bg-zinc-100 hover:bg-zinc-200 text-zinc-950 font-bold text-xs uppercase tracking-wider rounded-xl transition-all disabled:opacity-40"
+                className="w-full sm:w-auto py-2.5 px-6 bg-zinc-100 hover:bg-zinc-200 text-zinc-950 font-bold text-xs uppercase tracking-wider rounded-xl transition-all disabled:opacity-40"
               >
                 🔴 Iniciar Grabación
               </button>
             ) : (
               <button 
                 onClick={stopRecording} 
-                className="py-2.5 px-6 bg-red-600 hover:bg-red-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all animate-pulse"
+                className="w-full sm:w-auto py-2.5 px-6 bg-red-600 hover:bg-red-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all animate-pulse"
               >
                 ⏹️ Detener y Guardar
               </button>
             )}
+
+            <div className="hidden sm:block w-20" />
           </div>
         </div>
 
-        {/* 2. BARRA DE TEXTO PARA AGREGAR EL GUION */}
+        {/* 2. ÁREA PARA COPIAR, PEGAR Y EDITAR EL GUION */}
         <div className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-5 shadow-lg flex flex-col gap-3">
           <div>
             <h3 className="text-xs font-mono uppercase tracking-wider text-zinc-400">Editor de Guion</h3>
-            <p className="text-xs text-zinc-500 mt-0.5">Escribe o pega tu texto aquí. Usa doble espacio (Enter) para fragmentar las escenas.</p>
+            <p className="text-xs text-zinc-500 mt-0.5">Permite copiar y pegar libremente desde cualquier dispositivo. Deja una línea en blanco para separar tus escenas.</p>
           </div>
 
           <textarea
             value={scriptText}
             onChange={(e) => setScriptText(e.target.value)}
-            rows={5}
-            placeholder="Pega tu guion aquí..."
-            className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-zinc-200 outline-none focus:border-zinc-700 font-sans leading-relaxed"
+            rows={6}
+            placeholder="Pega o escribe tu guion completo aquí..."
+            className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-zinc-200 outline-none focus:border-zinc-700 font-sans leading-relaxed transition-colors"
           />
 
-          <button 
-            onClick={generateScenes} 
-            className="self-start px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold rounded-xl border border-zinc-700 transition"
-          >
-            ✨ Cargar Guion al Prompter
-          </button>
-        </div>
-
-        {/* 3. VISUALIZADOR DE ESCENAS GENERADAS */}
-        <div className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl flex flex-col overflow-hidden shadow-xl">
-          <div className="px-5 py-3 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/50">
-            <span className="text-xs font-semibold text-zinc-300">
-              Vista del Guion: {scenes[currentSceneIndex]?.title || "ESCENA"}
-            </span>
-            <span className="text-xs font-mono text-zinc-500 bg-zinc-950 px-2.5 py-0.5 rounded border border-zinc-800">
-              {currentSceneIndex + 1} / {scenes.length}
+          <div className="flex justify-between items-center mt-1">
+            <button 
+              onClick={generateScenes} 
+              className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold rounded-xl border border-zinc-700 transition"
+            >
+              ✨ Cargar Guion al Prompter
+            </button>
+            <span className="text-[11px] font-mono text-zinc-500 bg-zinc-950 px-2.5 py-1 rounded-md border border-zinc-800">
+              {scenes.length} {scenes.length === 1 ? "Escena activa" : "Escenas cargadas"}
             </span>
           </div>
-
-          <div className="p-6 min-h-[120px] flex items-center justify-center bg-zinc-950/20">
-            <p className="text-center text-base sm:text-lg text-zinc-400 leading-relaxed max-w-xl">
-              {scenes[currentSceneIndex]?.text}
-            </p>
-          </div>
-
-          {scenes.length > 1 && (
-            <div className="px-4 py-3 bg-zinc-950/40 border-t border-zinc-800 flex justify-end gap-2">
-              <button
-                disabled={currentSceneIndex === 0}
-                onClick={() => setCurrentSceneIndex(p => Math.max(p - 1, 0))}
-                className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-xs rounded-lg disabled:opacity-30 border border-zinc-700 transition"
-              >
-                ← Anterior
-              </button>
-              <button
-                disabled={currentSceneIndex === scenes.length - 1}
-                onClick={() => setCurrentSceneIndex(p => Math.min(p + 1, scenes.length - 1))}
-                className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-xs rounded-lg disabled:opacity-30 border border-zinc-700 transition"
-              >
-                Siguiente →
-              </button>
-            </div>
-          )}
         </div>
 
       </div>
