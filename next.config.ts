@@ -5,12 +5,13 @@ const withPWA = withPWAInit({
   dest: "public",
   disable: process.env.NODE_ENV === "development",
   register: true,
-  skipWaiting: true,
+  workboxOptions: {
+    skipWaiting: true,
+    clientsClaim: true,
+  },
 });
 
 const nextConfig: NextConfig = {
-  // Si quieres silenciar el warning también puedes poner:
-  // turbopack: {},
   reactStrictMode: true,
 };
 
