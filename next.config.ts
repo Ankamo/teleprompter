@@ -1,12 +1,17 @@
-import withPWA from "@ducanh2912/next-pwa";
+import type { NextConfig } from "next";
+import withPWAInit from "@ducanh2912/next-pwa";
 
-const nextConfig = {
-  // tu config actual
-};
-
-export default withPWA({
+const withPWA = withPWAInit({
   dest: "public",
   disable: process.env.NODE_ENV === "development",
   register: true,
   skipWaiting: true,
-})(nextConfig);
+});
+
+const nextConfig: NextConfig = {
+  // Si quieres silenciar el warning también puedes poner:
+  // turbopack: {},
+  reactStrictMode: true,
+};
+
+export default withPWA(nextConfig);
