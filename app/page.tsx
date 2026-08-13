@@ -109,7 +109,7 @@ export default function TeleprompterProStudio() {
             audio: false
           });
           s.getTracks().forEach(t => t.stop());
-        } catch {}
+        } catch { }
       }
 
       const devices = await navigator.mediaDevices.enumerateDevices();
@@ -192,12 +192,15 @@ export default function TeleprompterProStudio() {
     const customId = connectionMode === "host" ? generateShortId(6) : undefined;
 
     const createPeer = (id?: string): Peer => {
-      const p = new Peer(id, peerOptions);
+      // Si hay id (Host) lo usamos; si no (Cámara), Peer genera uno solo
+      const p = id ? new Peer(id, peerOptions) : new Peer(peerOptions);
 
       p.on("open", (openId) => {
         setPeerId(openId);
         setConnectionStatus(
-          connectionMode === "host" ? "Esperando cámara remota..." : "Listo para conectar"
+          connectionMode === "host"
+            ? "Esperando cámara remota..."
+            : "Listo para conectar"
         );
       });
 
@@ -223,7 +226,9 @@ export default function TeleprompterProStudio() {
         conn.on("data", async (data: any) => {
           if (data?.type === "camera-list" && connectionMode === "host") {
             setRemoteCameras(data.cameras || []);
-            if (data.cameras?.length > 0) setSelectedRemoteCamera(data.cameras[0].deviceId);
+            if (data.cameras?.length > 0) {
+              setSelectedRemoteCamera(data.cameras[0].deviceId);
+            }
           }
           if (data?.type === "switch-camera" && connectionMode === "camera") {
             await switchToCamera(data.deviceId, data.facingMode);
@@ -325,7 +330,7 @@ export default function TeleprompterProStudio() {
         const devices = await navigator.mediaDevices.enumerateDevices();
         setVideoDevices(devices.filter(d => d.kind === "videoinput"));
         setAudioDevices(devices.filter(d => d.kind === "audioinput"));
-      } catch {}
+      } catch { }
     }
     getDevices();
     navigator.mediaDevices?.addEventListener("devicechange", getDevices);
@@ -349,7 +354,7 @@ export default function TeleprompterProStudio() {
       if (videoRef.current) videoRef.current.srcObject = stream;
       setCameraReady(true);
       if ("wakeLock" in navigator) {
-        try { await (navigator as any).wakeLock.request("screen"); } catch {}
+        try { await (navigator as any).wakeLock.request("screen"); } catch { }
       }
     } catch {
       setCameraReady(false);
@@ -376,7 +381,7 @@ export default function TeleprompterProStudio() {
   useEffect(() => {
     const saved = localStorage.getItem("teleprompter_scripts");
     if (saved) {
-      try { setSavedScripts(JSON.parse(saved)); } catch {}
+      try { setSavedScripts(JSON.parse(saved)); } catch { }
     }
   }, []);
 
@@ -446,7 +451,7 @@ export default function TeleprompterProStudio() {
       if (isPrompting) setScrollSpeed(prev => Math.min(prev + 0.15, 8));
       else setIsPrompting(true);
     };
-    recognition.onerror = () => {};
+    recognition.onerror = () => { };
     recognition.start();
     recognitionRef.current = recognition;
     return () => recognition.stop();
@@ -701,11 +706,10 @@ export default function TeleprompterProStudio() {
                     <button
                       key={cam.deviceId}
                       onClick={() => requestRemoteCameraChange(cam)}
-                      className={`px-3 py-2 text-xs rounded-xl border transition flex items-center gap-1.5 ${
-                        selectedRemoteCamera === cam.deviceId
+                      className={`px-3 py-2 text-xs rounded-xl border transition flex items-center gap-1.5 ${selectedRemoteCamera === cam.deviceId
                           ? "bg-emerald-600/20 text-emerald-400 border-emerald-600/40"
                           : "bg-zinc-950 text-zinc-300 border-zinc-700 hover:bg-zinc-900"
-                      }`}
+                        }`}
                     >
                       <span>{isFront ? "🤳" : isBack ? "📷" : "📹"}</span>
                       <span className="truncate max-w-[180px]">{cam.label}</span>
