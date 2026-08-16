@@ -28,7 +28,7 @@ export default function FacebookLiveModal({
   chunksSent,
 }: FacebookLiveModalProps) {
   const [serverUrl, setServerUrl] = useState("rtmps://live-api-s.facebook.com:443/rtmp/");
-  const [streamKey, setStreamKey] = useState("FB-3929022957237307-0-Ab4AdGNweCesPeMuFRO0jSVG");
+  const [streamKey, setStreamKey] = useState("FB-1509884729151154-0-Ab7_Ow-FMwid7BCp9GSB1lCs");
   const [showKey, setShowKey] = useState(false);
   const [resolution, setResolution] = useState<"1080p" | "720p">("1080p");
   const [bitrate, setBitrate] = useState<number>(3500);
