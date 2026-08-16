@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#09090b" />
+      <stop offset="100%" stop-color="#18181b" />
+    </linearGradient>
+    <linearGradient id="brand-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg-grad)" />
+  <rect x="24" y="24" width="464" height="464" rx="96" stroke="#27272a" stroke-width="8" fill="none" />
+  
+  <!-- Pantalla de Teleprompter -->
+  <rect x="96" y="112" width="320" height="240" rx="32" fill="#000000" stroke="#3f3f46" stroke-width="8" />
+  
+  <!-- Líneas de texto -->
+  <rect x="144" y="160" width="224" height="18" rx="9" fill="#71717a" />
+  <rect x="144" y="200" width="180" height="18" rx="9" fill="#10b981" />
+  <rect x="144" y="240" width="200" height="18" rx="9" fill="#a1a1aa" />
+  <rect x="144" y="280" width="140" height="18" rx="9" fill="#71717a" />
+  
+  <!-- Línea de enfoque (Eye-line) -->
+  <line x1="96" y1="209" x2="416" y2="209" stroke="#10b981" stroke-width="4" stroke-dasharray="12 8" />
+  
+  <!-- Icono de Cámara / Grabación -->
+  <circle cx="256" cy="404" r="34" fill="url(#brand-grad)" />
+  <polygon points="250,392 268,404 250,416" fill="#ffffff" />
+</svg>

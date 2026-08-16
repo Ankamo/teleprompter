@@ -1,17 +1,22 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-// Configuración de visualización para dispositivos móviles
+
 export const viewport: Viewport = {
-  themeColor: "#000000",
+  themeColor: "#10b981",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1, // Evita el zoom molesto en iOS al hacer clic en inputs
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export const metadata: Metadata = {
-  title: "Teleprompter Pro",
-  description: "Graba tus videos con guion integrado",
+  title: "Teleprompter Pro Studio",
+  description: "Suite profesional de teleprompter con grabación multi-dispositivo, control remoto y voice tracking",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/icons/icon.svg",
+    apple: "/icons/icon.svg",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -25,22 +30,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es" className="bg-black text-white">
+    <html lang="es" className="bg-zinc-950 text-white dark">
       <head>
-        <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#10b981" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="apple-mobile-web-app-title" content="Teleprompter Pro" />
-        <link rel="apple-touch-icon" href="/icons/icon-192.png" />
-        <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#000000" />
-        <link rel="apple-touch-icon" href="/window.svg" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="apple-mobile-web-app-title" content="Teleprompter Pro" />
+        <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
       </head>
-      <body>
+      <body className="antialiased bg-zinc-950 text-zinc-100 min-h-screen">
         {children}
       </body>
     </html>
