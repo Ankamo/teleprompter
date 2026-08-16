@@ -6,7 +6,7 @@ import {
   ChevronLeft, ChevronRight, Sparkles, Save, Trash2, LayoutTemplate,
   Maximize2, Minimize2, Smartphone, Link2, Unlink, Mic2, Eye, QrCode,
   Tv, Volume2, FileText, Download, Upload, Plus, Copy, Check, Settings2,
-  Film, Layers, HelpCircle, Palette
+  Film, Layers, HelpCircle, Palette, Radio
 } from "lucide-react";
 import Peer, { MediaConnection, DataConnection } from "peerjs";
 
@@ -30,6 +30,8 @@ import AudioVUMeter from "@/components/AudioVUMeter";
 import RemoteController from "@/components/RemoteController";
 import FloatingPrompterWindow from "@/components/FloatingPrompter";
 import QRModal from "@/components/QRModal";
+import FacebookLiveModal from "@/components/FacebookLiveModal";
+import { FacebookLiveStreamer } from "@/lib/facebookLiveStreamer";
 
 const SOCIAL_PLATFORMS = [
   { id: "facebook", label: "Facebook", icon: "🌐" },
@@ -134,6 +136,16 @@ export default function TeleprompterProStudio() {
   const [voiceTracking, setVoiceTracking] = useState(false);
   const [activeThemeId, setActiveThemeId] = useState<string>("studio-pro");
   const [showFloatingPiP, setShowFloatingPiP] = useState(false);
+
+  // Facebook Live Streaming
+  const [showFacebookLiveModal, setShowFacebookLiveModal] = useState(false);
+  const [isFacebookLiveStreaming, setIsFacebookLiveStreaming] = useState(false);
+  const [fbLiveStats, setFbLiveStats] = useState({
+    durationSeconds: 0,
+    currentBitrateKbps: 0,
+    chunksSent: 0,
+  });
+  const fbStreamerRef = useRef<FacebookLiveStreamer | null>(null);
 
   // Pausa Automática del Director
   const [activeDirectorPause, setActiveDirectorPause] = useState<{ duration: number; remaining: number } | null>(null);
@@ -730,6 +742,59 @@ export default function TeleprompterProStudio() {
   };
 
   // ==========================================
+  // INICIALIZACIÓN DE FACEBOOK LIVE STREAMER
+  // ==========================================
+  useEffect(() => {
+    fbStreamerRef.current = new FacebookLiveStreamer((stats) => {
+      setFbLiveStats({
+        durationSeconds: stats.durationSeconds,
+        currentBitrateKbps: stats.currentBitrateKbps,
+        chunksSent: stats.chunksSent,
+      });
+      setIsFacebookLiveStreaming(stats.isStreaming);
+    });
+
+    return () => {
+      fbStreamerRef.current?.stop();
+    };
+  }, []);
+
+  const handleStartFacebookLive = async (config: {
+    serverUrl: string;
+    streamKey: string;
+    resolution: string;
+    bitrate: number;
+  }) => {
+    const videoEl = videoRef.current;
+    const canvasEl = canvasRef.current;
+    if (!videoEl || !canvasEl) {
+      alert("Por favor asegúrate de tener la cámara activa para emitir.");
+      return;
+    }
+
+    // Configurar canvas si está oculto
+    if (aspectRatio === "16:9") { canvasEl.width = 1920; canvasEl.height = 1080; }
+    else if (aspectRatio === "9:16") { canvasEl.width = 1080; canvasEl.height = 1920; }
+    else { canvasEl.width = 1080; canvasEl.height = 1080; }
+
+    const canvasStream = canvasEl.captureStream(30);
+    const streamSource = activeStreamRef.current || (videoEl.srcObject as MediaStream);
+    streamSource?.getAudioTracks().forEach((t) => canvasStream.addTrack(t));
+
+    if (fbStreamerRef.current) {
+      const ok = await fbStreamerRef.current.start(canvasStream, config);
+      if (ok) {
+        setIsFacebookLiveStreaming(true);
+      }
+    }
+  };
+
+  const handleStopFacebookLive = () => {
+    fbStreamerRef.current?.stop();
+    setIsFacebookLiveStreaming(false);
+  };
+
+  // ==========================================
   // GRABACIÓN DE VIDEO Y SUBTÍTULOS (.SRT)
   // ==========================================
   const startRecordingWithCountdown = () => {
@@ -970,6 +1035,20 @@ export default function TeleprompterProStudio() {
               <Tv className="w-3.5 h-3.5" /> Flotante
             </button>
 
+            {/* Botón Facebook Live */}
+            <button
+              onClick={() => setShowFacebookLiveModal(true)}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold border transition ${
+                isFacebookLiveStreaming
+                  ? "bg-red-600/20 text-red-400 border-red-500/40 animate-pulse shadow-lg shadow-red-900/30"
+                  : "bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 border-blue-500/30"
+              }`}
+              title="Transmitir en vivo a Facebook Live con tu Stream Key"
+            >
+              <Radio className={`w-3.5 h-3.5 ${isFacebookLiveStreaming ? "text-red-400 animate-pulse" : "text-blue-400"}`} />
+              <span>{isFacebookLiveStreaming ? "FB LIVE (ON)" : "Facebook Live"}</span>
+            </button>
+
             {/* Pantalla Completa */}
             <button
               onClick={toggleFullscreen}
@@ -980,6 +1059,18 @@ export default function TeleprompterProStudio() {
             </button>
           </div>
         </header>
+
+        {/* MODAL FACEBOOK LIVE */}
+        <FacebookLiveModal
+          isOpen={showFacebookLiveModal}
+          onClose={() => setShowFacebookLiveModal(false)}
+          isStreaming={isFacebookLiveStreaming}
+          onStartStream={handleStartFacebookLive}
+          onStopStream={handleStopFacebookLive}
+          streamDuration={fbLiveStats.durationSeconds}
+          currentBitrate={fbLiveStats.currentBitrateKbps}
+          chunksSent={fbLiveStats.chunksSent}
+        />
 
         {/* MODAL QR SI ESTÁ ACTIVO */}
         {showQRModal && peerId && (
@@ -1174,6 +1265,13 @@ export default function TeleprompterProStudio() {
                 {countdown !== null && (
                   <div className="absolute inset-0 bg-black/85 flex items-center justify-center z-50 animate-in fade-in">
                     <span className="text-9xl font-black text-emerald-400 animate-bounce">{countdown}</span>
+                  </div>
+                )}
+
+                {/* Banner de Emisión EN VIVO en Facebook */}
+                {isFacebookLiveStreaming && (
+                  <div className="absolute top-4 left-4 z-40 bg-red-600/90 text-white px-3 py-1 rounded-full text-xs font-mono font-bold flex items-center gap-1.5 shadow-lg border border-red-400/40 animate-pulse">
+                    <Radio className="w-3.5 h-3.5" /> EN VIVO FB · {formatTime(fbLiveStats.durationSeconds)}
                   </div>
                 )}
 
