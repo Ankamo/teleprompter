@@ -1059,7 +1059,7 @@ export default function TeleprompterProStudio() {
                   )}
                 </div>
 
-                {(connectionMode === "camera" || connectionMode === "controller") && (
+                {connectionMode === "camera" && (
                   <div className="flex items-center gap-2">
                     <input
                       value={remotePeerId}
@@ -1073,7 +1073,7 @@ export default function TeleprompterProStudio() {
                       className="bg-zinc-950 border border-zinc-700 rounded-2xl px-3.5 py-2 text-sm w-36 font-mono tracking-widest uppercase"
                     />
                     <button
-                      onClick={connectionMode === "camera" ? connectAsCamera : connectAsController}
+                      onClick={connectAsCamera}
                       className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-2xl text-xs font-bold transition shadow-lg shadow-emerald-900/30"
                     >
                       {isConnected ? "Reconectar" : "Conectar"}
